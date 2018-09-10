@@ -181,6 +181,7 @@ class LIBPROTOBUF_EXPORT WireFormat {
   // This is different from MakeTag(field->number(), field->type()) in the case
   // of packed repeated fields.
   static uint32 MakeTag(const FieldDescriptor* field);
+  static uint32 MakeDefaultTag(const FieldDescriptor* field);
 
   // Parse a single field.  The input should start out positioned immediately
   // after the tag.
@@ -293,6 +294,10 @@ inline WireFormatLite::WireType WireFormat::WireTypeForFieldType(
 
 inline uint32 WireFormat::MakeTag(const FieldDescriptor* field) {
   return WireFormatLite::MakeTag(field->number(), WireTypeForField(field));
+}
+
+inline uint32 WireFormat::MakeDefaultTag(const FieldDescriptor* field) {
+    return WireFormatLite::MakeDefaultTag(field->number());
 }
 
 inline size_t WireFormat::TagSize(int field_number,

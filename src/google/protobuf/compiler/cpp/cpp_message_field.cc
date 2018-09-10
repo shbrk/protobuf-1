@@ -264,6 +264,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   }
   printer->Print(variables_,
     "  $name$_ = NULL;\n"
+    "  SetDirty($number$);\n"
     "  return temp;\n"
     "}\n");
 
@@ -275,6 +276,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
       "  $clear_hasbit$\n"
       "  $type$* temp = $casted_member$;\n"
       "  $name$_ = NULL;\n"
+      "  SetDirty($number$);\n"
       "  return temp;\n"
       "}\n");
   }
@@ -294,6 +296,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   printer->Print(variables_,
     "  }\n"
     "  // @@protoc_insertion_point(field_mutable:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "  return $casted_member$;\n"
     "}\n");
 
@@ -345,13 +348,14 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     printer->Print(variables_,
       "  $name$_ = $name$;\n");
   }
+  printer->Print(variables_, "  SetDirty($number$);\n");
   printer->Print(variables_,
     "  // @@protoc_insertion_point(field_set_allocated:$full_name$)\n"
     "}\n");
 }
 
 void MessageFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer, bool dirty) const {
   if (!HasFieldPresence(descriptor_->file())) {
     // If we don't have has-bits, message presence is indicated only by ptr !=
     // NULL. Thus on clear, we need to delete the object.
@@ -363,6 +367,9 @@ GenerateClearingCode(io::Printer* printer) const {
   } else {
     printer->Print(variables_,
       "if ($name$_ != NULL) $name$_->Clear();\n");
+  }
+  if(dirty) {
+      printer->Print(variables_, "SetDirty($number$);\n");
   }
 }
 
@@ -460,10 +467,10 @@ GenerateSerializeWithCachedSizesToArray(io::Printer* printer) const {
 
 void MessageFieldGenerator::
 GenerateByteSize(io::Printer* printer) const {
-  printer->Print(variables_,
-    "total_size += $tag_size$ +\n"
-    "  ::google::protobuf::internal::WireFormatLite::$declared_type$Size(\n"
-    "    *$field_member$);\n");
+    printer->Print(variables_,
+                   "total_size += $tag_size$ +\n"
+                   "  ::google::protobuf::internal::WireFormatLite::$declared_type$Size(\n"
+                   "    *$field_member$);\n");
 }
 
 // ===================================================================
@@ -522,6 +529,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   printer->Print(variables_,
     "inline $type$* $classname$::$release_name$() {\n"
     "  // @@protoc_insertion_point(field_release:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "  if (has_$name$()) {\n"
     "    clear_has_$oneof_name$();\n"
     "      $type$* temp = $field_member$;\n");
@@ -551,6 +559,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     printer->Print(variables_,
       "inline $type$* $classname$::unsafe_arena_release_$name$() {\n"
       "  // @@protoc_insertion_point(field_unsafe_arena_release"
+      "  SetDirty($number$);\n"
       ":$full_name$)\n"
       "  if (has_$name$()) {\n"
       "    clear_has_$oneof_name$();\n"
@@ -572,6 +581,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
       "    $field_member$ = $name$;\n"
       "  }\n"
       "  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:"
+      "  SetDirty($number$);\n"
       "$full_name$)\n"
       "}\n");
   }
@@ -585,12 +595,13 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "        GetArenaNoVirtual());\n"
     "  }\n"
     "  // @@protoc_insertion_point(field_mutable:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "  return $field_member$;\n"
     "}\n");
 }
 
 void MessageOneofFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer, bool dirty) const {
   if (SupportsArenas(descriptor_)) {
     printer->Print(variables_,
       "if (GetArenaNoVirtual() == NULL) {\n"
@@ -599,6 +610,9 @@ GenerateClearingCode(io::Printer* printer) const {
   } else {
     printer->Print(variables_,
       "delete $field_member$;\n");
+  }
+  if(dirty){
+      printer->Print(variables_, "SetDirty($number$);\n");
   }
 }
 
@@ -672,12 +686,14 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     // TODO(dlj): move insertion points
     "  // @@protoc_insertion_point(field_mutable:$full_name$)\n"
     "$type_reference_function$"
+    "  SetDirty($number$);\n"
     "  return $name$_.Mutable(index);\n"
     "}\n"
     "inline ::google::protobuf::RepeatedPtrField< $type$ >*\n"
     "$classname$::mutable_$name$() {\n"
     "  // @@protoc_insertion_point(field_mutable_list:$full_name$)\n"
     "$type_reference_function$"
+    "  SetDirty($number$);\n"
     "  return &$name$_;\n"
     "}\n");
 
@@ -700,6 +716,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   printer->Print(variables_,
     "inline $type$* $classname$::add_$name$() {\n"
     "  // @@protoc_insertion_point(field_add:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "  return $name$_.Add();\n"
     "}\n");
 
@@ -713,7 +730,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
 }
 
 void RepeatedMessageFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer, bool dirty) const {
   if (implicit_weak_field_) {
     printer->Print(
         variables_,
@@ -721,6 +738,9 @@ GenerateClearingCode(io::Printer* printer) const {
         "::google::protobuf::internal::ImplicitWeakTypeHandler<$type$>>();\n");
   } else {
     printer->Print(variables_, "$name$_.Clear();\n");
+  }
+  if(dirty) {
+      printer->Print(variables_, "SetDirty($number$);\n");
   }
 }
 
@@ -806,28 +826,28 @@ GenerateSerializeWithCachedSizesToArray(io::Printer* printer) const {
 
 void RepeatedMessageFieldGenerator::
 GenerateByteSize(io::Printer* printer) const {
-  printer->Print(variables_,
-    "{\n"
-    "  unsigned int count = static_cast<unsigned int>(this->$name$_size());\n");
-  printer->Indent();
-  printer->Print(variables_,
-    "total_size += $tag_size$UL * count;\n"
-    "for (unsigned int i = 0; i < count; i++) {\n"
-    "  total_size +=\n"
-    "    ::google::protobuf::internal::WireFormatLite::$declared_type$Size(\n");
-  if (implicit_weak_field_) {
-    printer->Print(
-        variables_,
-        "      CastToBase($name$_).Get<"
-        "::google::protobuf::internal::ImplicitWeakTypeHandler<$type$>>("
-        "static_cast<int>(i)));\n");
-  } else {
     printer->Print(variables_,
-        "      this->$name$(static_cast<int>(i)));\n");
-  }
-  printer->Print(variables_, "}\n");
-  printer->Outdent();
-  printer->Print("}\n");
+                   "{\n"
+                   "  unsigned int count = static_cast<unsigned int>(this->$name$_size());\n");
+    printer->Indent();
+    printer->Print(variables_,
+                   "total_size += $tag_size$UL * count;\n"
+                   "for (unsigned int i = 0; i < count; i++) {\n"
+                   "  total_size +=\n"
+                   "    ::google::protobuf::internal::WireFormatLite::$declared_type$Size(\n");
+    if (implicit_weak_field_) {
+        printer->Print(
+                variables_,
+                "      CastToBase($name$_).Get<"
+                "::google::protobuf::internal::ImplicitWeakTypeHandler<$type$>>("
+                "static_cast<int>(i)));\n");
+    } else {
+        printer->Print(variables_,
+                       "      this->$name$(static_cast<int>(i)));\n");
+    }
+    printer->Print(variables_, "}\n");
+    printer->Outdent();
+    printer->Print("}\n");
 }
 
 }  // namespace cpp

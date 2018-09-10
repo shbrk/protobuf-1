@@ -97,7 +97,7 @@ class FieldGenerator {
 
   // Generate lines of code (statements, not declarations) which clear the
   // field.  This is used to define the clear_$name$() method
-  virtual void GenerateClearingCode(io::Printer* printer) const = 0;
+  virtual void GenerateClearingCode(io::Printer* printer, bool dirty = false) const = 0;
 
   // Generate lines of code (statements, not declarations) which clear the field
   // as part of the Clear() method for the whole message.  For message types

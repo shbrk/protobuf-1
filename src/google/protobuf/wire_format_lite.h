@@ -108,6 +108,7 @@ class LIBPROTOBUF_EXPORT WireFormatLite {
     WIRETYPE_START_GROUP      = 3,
     WIRETYPE_END_GROUP        = 4,
     WIRETYPE_FIXED32          = 5,
+    WIRETYPE_DEFAULT          = 7,
   };
 
   // Lite alternative to FieldDescriptor::Type.  Must be kept in sync.
@@ -168,6 +169,8 @@ class LIBPROTOBUF_EXPORT WireFormatLite {
   // This is different from MakeTag(field->number(), field->type()) in the case
   // of packed repeated fields.
   static uint32 MakeTag(int field_number, WireType type);
+  static uint32 MakeDefaultTag(int field_number);
+
   static WireType GetTagWireType(uint32 tag);
   static int GetTagFieldNumber(uint32 tag);
 
@@ -457,6 +460,9 @@ class LIBPROTOBUF_EXPORT WireFormatLite {
   // space to write directly to a flat array.
   static void WriteGroupMaybeToArray(int field_number, const MessageLite& value,
                                      io::CodedOutputStream* output);
+
+  static void WireEmptyLengthDelimited(int field_number, io::CodedOutputStream* output);
+  static uint8* WireEmptyLengthDelimited(int field_number, uint8* target);
   static void WriteMessageMaybeToArray(int field_number,
                                        const MessageLite& value,
                                        io::CodedOutputStream* output);
@@ -781,6 +787,10 @@ WireFormatLite::FieldTypeToCppType(FieldType type) {
 
 inline uint32 WireFormatLite::MakeTag(int field_number, WireType type) {
   return GOOGLE_PROTOBUF_WIRE_FORMAT_MAKE_TAG(field_number, type);
+}
+
+inline uint32 WireFormatLite::MakeDefaultTag(int field_number) {
+    return GOOGLE_PROTOBUF_WIRE_FORMAT_MAKE_TAG(field_number, WIRETYPE_DEFAULT);
 }
 
 inline WireFormatLite::WireType WireFormatLite::GetTagWireType(uint32 tag) {

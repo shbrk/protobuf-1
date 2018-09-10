@@ -81,6 +81,9 @@ compile
 src/**/*.log
 src/**/*.trs
 
+# idea
+.idea
+
 # JavaBuild output.
 java/core/target
 java/util/target
@@ -90,6 +93,8 @@ java/**/*.iml
 
 # Windows native output.
 cmake/build
+cmake/cmake-build-debug
+cmake/cmake-build-release
 build_msvc
 
 # NuGet packages: we want the repository configuration, but not the

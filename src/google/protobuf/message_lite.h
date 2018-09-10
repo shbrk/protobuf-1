@@ -46,8 +46,13 @@
 #include <google/protobuf/arena.h>
 #include <google/protobuf/stubs/port.h>
 
+#define S_CPP_ALL 0
+#define S_CPP_DIRTY 1
+#define S_CPP_FIXED 2
+
 namespace google {
 namespace protobuf {
+
 template <typename T>
 class RepeatedPtrField;
 namespace io {
@@ -258,11 +263,13 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // If you'd like to convert a human-readable string into a protocol buffer
   // object, see google::protobuf::TextFormat::ParseFromString().
   bool ParseFromString(const string& data);
+  bool ParseFromStringMerge(const string& data);
   // Like ParseFromString(), but accepts messages that are missing
   // required fields.
   bool ParsePartialFromString(const string& data);
   // Parse a protocol buffer contained in an array of bytes.
   bool ParseFromArray(const void* data, int size);
+  bool ParseFromArrayMerge(const void* data, int size);
   // Like ParseFromArray(), but accepts messages that are missing
   // required fields.
   bool ParsePartialFromArray(const void* data, int size);
@@ -307,6 +314,8 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // Serialize the message and store it in the given string.  All required
   // fields must be set.
   bool SerializeToString(string* output) const;
+  bool SerializeDirtyToString(string* output);
+  bool SerializeFixedToString(string* output) const;
   // Like SerializeToString(), but allows missing required fields.
   bool SerializePartialToString(string* output) const;
   // Serialize the message and store it in the given byte array.  All required
@@ -331,12 +340,33 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // Like AppendToString(), but allows missing required fields.
   bool AppendPartialToString(string* output) const;
 
+  bool AppendDirtyToString(string* output) const;
+  bool AppendFixedToString(string* output) const;
+
   // Computes the serialized size of the message.  This recursively calls
   // ByteSizeLong() on all embedded messages.
   //
   // ByteSizeLong() is generally linear in the number of fields defined for the
   // proto.
   virtual size_t ByteSizeLong() const = 0;
+  virtual size_t ByteSizeConditionLong(int s_type) const { return 0;};
+  inline void CleanDirty() { _internal_dirty.clear();};
+  inline void SetDirty(uint32_t field) { _internal_dirty.insert(field);} ;
+  inline bool IsDirty(uint32_t field) const {
+      return _internal_dirty.count(field) != 0;
+  };
+  inline bool IsFixed(uint32_t field) const {
+      return true;
+  }
+  inline bool CheckFieldCondition(uint32_t field,int s_type) const {
+      if (s_type == S_CPP_DIRTY){
+          return IsDirty(field);
+      } else if( s_type == S_CPP_FIXED) {
+          return IsFixed(field);
+      } else{
+          return true;
+      }
+  }
 
   // Legacy ByteSize() API.
   PROTOBUF_RUNTIME_DEPRECATED("Please use ByteSizeLong() instead")
@@ -349,6 +379,8 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // ByteSize must be non-negative.  Otherwise the results are undefined.
   virtual void SerializeWithCachedSizes(
       io::CodedOutputStream* output) const;
+  virtual void SerializeConditionWithCachedSizes(
+            io::CodedOutputStream* output,int s_type = S_CPP_ALL) const;
 
   // Functions below here are not part of the public interface.  It isn't
   // enforced, but they should be treated as private, and will be private
@@ -361,6 +393,7 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // deterministic serialization, e.g., maps in sorted order, is determined by
   // CodedOutputStream::IsDefaultSerializationDeterministic().
   virtual uint8* SerializeWithCachedSizesToArray(uint8* target) const;
+  virtual uint8* SerializeConditionWithCachedSizesToArray(uint8* target, int s_type) const;
 
   // Returns the result of the last call to ByteSize().  An embedded message's
   // size is needed both to serialize it (because embedded messages are
@@ -377,6 +410,8 @@ class LIBPROTOBUF_EXPORT MessageLite {
 
   virtual uint8* InternalSerializeWithCachedSizesToArray(bool deterministic,
                                                          uint8* target) const;
+  virtual uint8* InternalSerializeConditionWithCachedSizesToArray(bool deterministic,
+                                                           uint8* target,int s_type = S_CPP_ALL) const;
 
  protected:
   // CastToBase allows generated code to cast a RepeatedPtrField<T> to
@@ -398,7 +433,7 @@ class LIBPROTOBUF_EXPORT MessageLite {
   static T* CreateMaybeMessage(Arena* arena) {
     return Arena::CreateMaybeMessage<T>(arena);
   }
-
+  std::set<uint32_t> _internal_dirty;
  private:
   // TODO(gerbens) make this a pure abstract function
   virtual const void* InternalGetTable() const { return NULL; }

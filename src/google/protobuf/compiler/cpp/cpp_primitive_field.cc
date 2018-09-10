@@ -132,13 +132,17 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "inline void $classname$::set_$name$($type$ value) {\n"
     "  $set_hasbit$\n"
     "  $name$_ = value;\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_set:$full_name$)\n"
     "}\n");
 }
 
 void PrimitiveFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer,bool dirty) const {
   printer->Print(variables_, "$name$_ = $default$;\n");
+  if(dirty){
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void PrimitiveFieldGenerator::
@@ -226,12 +230,16 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "  }\n"
     "  $field_member$ = value;\n"
     "  // @@protoc_insertion_point(field_set:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "}\n");
 }
 
 void PrimitiveOneofFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer, bool dirty) const {
   printer->Print(variables_, "$field_member$ = $default$;\n");
+  if(dirty){
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void PrimitiveOneofFieldGenerator::
@@ -315,10 +323,12 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "}\n"
     "inline void $classname$::set_$name$(int index, $type$ value) {\n"
     "  $name$_.Set(index, value);\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_set:$full_name$)\n"
     "}\n"
     "inline void $classname$::add_$name$($type$ value) {\n"
     "  $name$_.Add(value);\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_add:$full_name$)\n"
     "}\n"
     "inline const ::google::protobuf::RepeatedField< $type$ >&\n"
@@ -328,14 +338,18 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "}\n"
     "inline ::google::protobuf::RepeatedField< $type$ >*\n"
     "$classname$::mutable_$name$() {\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_mutable_list:$full_name$)\n"
     "  return &$name$_;\n"
     "}\n");
 }
 
 void RepeatedPrimitiveFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer,bool dirty) const {
   printer->Print(variables_, "$name$_.Clear();\n");
+  if(dirty) {
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void RepeatedPrimitiveFieldGenerator::
@@ -380,7 +394,6 @@ GenerateSerializeWithCachedSizes(io::Printer* printer) const {
   if (descriptor_->is_packed()) {
     // Write the tag and the size.
     printer->Print(variables_,
-      "if (this->$name$_size() > 0) {\n"
       "  ::google::protobuf::internal::WireFormatLite::WriteTag("
           "$number$, "
           "::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, "
@@ -397,7 +410,6 @@ GenerateSerializeWithCachedSizes(io::Printer* printer) const {
         "    this->$name$().data(), this->$name$_size(), output);\n");
       array_written = true;  // Wrote array all at once
     }
-    printer->Print(variables_, "}\n");
   }
   if (!array_written) {
     printer->Print(variables_,
@@ -445,31 +457,31 @@ GenerateByteSize(io::Printer* printer) const {
   int fixed_size = FixedSize(descriptor_->type());
   if (fixed_size == -1) {
     printer->Print(variables_,
-      "size_t data_size = ::google::protobuf::internal::WireFormatLite::\n"
-      "  $declared_type$Size(this->$name$_);\n");
+                   "size_t data_size = ::google::protobuf::internal::WireFormatLite::\n"
+                   "  $declared_type$Size(this->$name$_);\n");
   } else {
     printer->Print(variables_,
-      "unsigned int count = static_cast<unsigned int>(this->$name$_size());\n"
-      "size_t data_size = $fixed_size$UL * count;\n");
+                   "unsigned int count = static_cast<unsigned int>(this->$name$_size());\n"
+                   "size_t data_size = $fixed_size$UL * count;\n");
   }
 
   if (descriptor_->is_packed()) {
     printer->Print(variables_,
-      "if (data_size > 0) {\n"
-      "  total_size += $tag_size$ +\n"
-      "    ::google::protobuf::internal::WireFormatLite::Int32Size(\n"
-      "        static_cast< ::google::protobuf::int32>(data_size));\n"
-      "}\n"
-      "int cached_size = ::google::protobuf::internal::ToCachedSize(data_size);\n"
-      "GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();\n"
-      "_$name$_cached_byte_size_ = cached_size;\n"
-      "GOOGLE_SAFE_CONCURRENT_WRITES_END();\n"
-      "total_size += data_size;\n");
+                   "if (data_size > 0) {\n"
+                   "  total_size += $tag_size$ +\n"
+                   "    ::google::protobuf::internal::WireFormatLite::Int32Size(\n"
+                   "        static_cast< ::google::protobuf::int32>(data_size));\n"
+                   "}\n"
+                   "int cached_size = ::google::protobuf::internal::ToCachedSize(data_size);\n"
+                   "GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();\n"
+                   "_$name$_cached_byte_size_ = cached_size;\n"
+                   "GOOGLE_SAFE_CONCURRENT_WRITES_END();\n"
+                   "total_size += data_size;\n");
   } else {
     printer->Print(variables_,
-      "total_size += $tag_size$ *\n"
-      "              ::google::protobuf::internal::FromIntSize(this->$name$_size());\n"
-      "total_size += data_size;\n");
+                   "total_size += $tag_size$ *\n"
+                   "              ::google::protobuf::internal::FromIntSize(this->$name$_size());\n"
+                   "total_size += data_size;\n");
   }
   printer->Outdent();
   printer->Print("}\n");

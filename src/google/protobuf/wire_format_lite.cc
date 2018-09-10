@@ -567,6 +567,15 @@ void WireFormatLite::WriteGroupMaybeToArray(int field_number,
   WriteTag(field_number, WIRETYPE_END_GROUP, output);
 }
 
+void WireFormatLite::WireEmptyLengthDelimited(int field_number,io::CodedOutputStream* output) {
+  WriteTag(field_number, WIRETYPE_DEFAULT, output);
+}
+
+uint8* WireFormatLite::WireEmptyLengthDelimited(int field_number, uint8* target) {
+    return WriteTagToArray(field_number, WIRETYPE_DEFAULT, target);
+}
+
+
 void WireFormatLite::WriteMessageMaybeToArray(int field_number,
                                               const MessageLite& value,
                                               io::CodedOutputStream* output) {
