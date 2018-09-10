@@ -43,6 +43,7 @@
 #include <google/protobuf/compiler/cpp/cpp_message_layout_helper.h>
 #include <google/protobuf/compiler/cpp/cpp_options.h>
 
+
 namespace google {
 namespace protobuf {
   namespace io {
@@ -169,6 +170,8 @@ class MessageGenerator {
                                  const FieldDescriptor* field,
                                  bool unbounded,
                                  int cached_has_bits_index);
+
+
   // Generate a switch statement to serialize 2+ fields from the same oneof.
   // Or, if fields.size() == 1, just call GenerateSerializeOneField().
   void GenerateSerializeOneofFields(

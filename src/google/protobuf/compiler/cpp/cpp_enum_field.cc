@@ -96,13 +96,17 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   printer->Print(variables_,
     "  $set_hasbit$\n"
     "  $name$_ = value;\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_set:$full_name$)\n"
     "}\n");
 }
 
 void EnumFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer,bool dirty) const {
   printer->Print(variables_, "$name$_ = $default$;\n");
+  if(dirty) {
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void EnumFieldGenerator::
@@ -211,12 +215,16 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "  }\n"
     "  $field_member$ = value;\n"
     "  // @@protoc_insertion_point(field_set:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "}\n");
 }
 
 void EnumOneofFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer, bool dirty) const {
   printer->Print(variables_, "$field_member$ = $default$;\n");
+  if(dirty){
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void EnumOneofFieldGenerator::
@@ -287,6 +295,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   }
   printer->Print(variables_,
     "  $name$_.Set(index, value);\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_set:$full_name$)\n"
     "}\n"
     "inline void $classname$::add_$name$($type$ value) {\n");
@@ -296,6 +305,7 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
   }
   printer->Print(variables_,
     "  $name$_.Add(value);\n"
+    "  SetDirty($number$);\n"
     "  // @@protoc_insertion_point(field_add:$full_name$)\n"
     "}\n"
     "inline const ::google::protobuf::RepeatedField<int>&\n"
@@ -306,13 +316,17 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
     "inline ::google::protobuf::RepeatedField<int>*\n"
     "$classname$::mutable_$name$() {\n"
     "  // @@protoc_insertion_point(field_mutable_list:$full_name$)\n"
+    "  SetDirty($number$);\n"
     "  return &$name$_;\n"
     "}\n");
 }
 
 void RepeatedEnumFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer,bool dirty) const {
   printer->Print(variables_, "$name$_.Clear();\n");
+  if(dirty){
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void RepeatedEnumFieldGenerator::
@@ -435,14 +449,12 @@ GenerateSerializeWithCachedSizes(io::Printer* printer) const {
   if (descriptor_->is_packed()) {
     // Write the tag and the size.
     printer->Print(variables_,
-      "if (this->$name$_size() > 0) {\n"
       "  ::google::protobuf::internal::WireFormatLite::WriteTag(\n"
       "    $number$,\n"
       "    ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,\n"
       "    output);\n"
       "  output->WriteVarint32(\n"
-      "      static_cast< ::google::protobuf::uint32>(_$name$_cached_byte_size_));\n"
-      "}\n");
+      "      static_cast< ::google::protobuf::uint32>(_$name$_cached_byte_size_));\n");
   }
   printer->Print(variables_,
       "for (int i = 0, n = this->$name$_size(); i < n; i++) {\n");
@@ -483,35 +495,35 @@ GenerateSerializeWithCachedSizesToArray(io::Printer* printer) const {
 
 void RepeatedEnumFieldGenerator::
 GenerateByteSize(io::Printer* printer) const {
-  printer->Print(variables_,
-    "{\n"
-    "  size_t data_size = 0;\n"
-    "  unsigned int count = static_cast<unsigned int>(this->$name$_size());");
-  printer->Indent();
-  printer->Print(variables_,
-      "for (unsigned int i = 0; i < count; i++) {\n"
-      "  data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(\n"
-      "    this->$name$(static_cast<int>(i)));\n"
-      "}\n");
+    printer->Print(variables_,
+                   "{\n"
+                   "  size_t data_size = 0;\n"
+                   "  unsigned int count = static_cast<unsigned int>(this->$name$_size());");
+    printer->Indent();
+    printer->Print(variables_,
+                   "for (unsigned int i = 0; i < count; i++) {\n"
+                   "  data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(\n"
+                   "    this->$name$(static_cast<int>(i)));\n"
+                   "}\n");
 
-  if (descriptor_->is_packed()) {
-    printer->Print(variables_,
-      "if (data_size > 0) {\n"
-      "  total_size += $tag_size$ +\n"
-      "    ::google::protobuf::internal::WireFormatLite::Int32Size(\n"
-      "        static_cast< ::google::protobuf::int32>(data_size));\n"
-      "}\n"
-      "int cached_size = ::google::protobuf::internal::ToCachedSize(data_size);\n"
-      "GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();\n"
-      "_$name$_cached_byte_size_ = cached_size;\n"
-      "GOOGLE_SAFE_CONCURRENT_WRITES_END();\n"
-      "total_size += data_size;\n");
-  } else {
-    printer->Print(variables_,
-      "total_size += ($tag_size$UL * count) + data_size;\n");
-  }
-  printer->Outdent();
-  printer->Print("}\n");
+    if (descriptor_->is_packed()) {
+        printer->Print(variables_,
+                       "if (data_size > 0) {\n"
+                       "  total_size += $tag_size$ +\n"
+                       "    ::google::protobuf::internal::WireFormatLite::Int32Size(\n"
+                       "        static_cast< ::google::protobuf::int32>(data_size));\n"
+                       "}\n"
+                       "int cached_size = ::google::protobuf::internal::ToCachedSize(data_size);\n"
+                       "GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();\n"
+                       "_$name$_cached_byte_size_ = cached_size;\n"
+                       "GOOGLE_SAFE_CONCURRENT_WRITES_END();\n"
+                       "total_size += data_size;\n");
+    } else {
+        printer->Print(variables_,
+                       "total_size += ($tag_size$UL * count) + data_size;\n");
+    }
+    printer->Outdent();
+    printer->Print("}\n");
 }
 
 }  // namespace cpp

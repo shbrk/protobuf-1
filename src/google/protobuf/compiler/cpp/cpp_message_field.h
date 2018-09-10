@@ -56,7 +56,7 @@ class MessageFieldGenerator : public FieldGenerator {
   void GenerateAccessorDeclarations(io::Printer* printer) const;
   void GenerateInlineAccessorDefinitions(io::Printer* printer) const;
   void GenerateNonInlineAccessorDefinitions(io::Printer* printer) const;
-  void GenerateClearingCode(io::Printer* printer) const;
+  void GenerateClearingCode(io::Printer* printer, bool dirty = false) const;
   void GenerateMessageClearingCode(io::Printer* printer) const;
   void GenerateMergingCode(io::Printer* printer) const;
   void GenerateSwappingCode(io::Printer* printer) const;
@@ -86,7 +86,7 @@ class MessageOneofFieldGenerator : public MessageFieldGenerator {
   // implements FieldGenerator ---------------------------------------
   void GenerateInlineAccessorDefinitions(io::Printer* printer) const;
   void GenerateNonInlineAccessorDefinitions(io::Printer* printer) const;
-  void GenerateClearingCode(io::Printer* printer) const;
+  void GenerateClearingCode(io::Printer* printer, bool dirty = false) const;
 
   // MessageFieldGenerator, from which we inherit, overrides this so we need to
   // override it as well.
@@ -110,7 +110,7 @@ class RepeatedMessageFieldGenerator : public FieldGenerator {
   void GeneratePrivateMembers(io::Printer* printer) const;
   void GenerateAccessorDeclarations(io::Printer* printer) const;
   void GenerateInlineAccessorDefinitions(io::Printer* printer) const;
-  void GenerateClearingCode(io::Printer* printer) const;
+  void GenerateClearingCode(io::Printer* printer, bool dirty = false) const;
   void GenerateMergingCode(io::Printer* printer) const;
   void GenerateSwappingCode(io::Printer* printer) const;
   void GenerateConstructorCode(io::Printer* printer) const;

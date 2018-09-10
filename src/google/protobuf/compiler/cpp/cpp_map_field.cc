@@ -145,13 +145,17 @@ GenerateInlineAccessorDefinitions(io::Printer* printer) const {
       "inline ::google::protobuf::Map< $key_cpp$, $val_cpp$ >*\n"
       "$classname$::mutable_$name$() {\n"
       "  // @@protoc_insertion_point(field_mutable_map:$full_name$)\n"
+      "  SetDirty($number$);\n"
       "  return $name$_.MutableMap();\n"
       "}\n");
 }
 
 void MapFieldGenerator::
-GenerateClearingCode(io::Printer* printer) const {
+GenerateClearingCode(io::Printer* printer,bool dirty) const {
   printer->Print(variables_, "$name$_.Clear();\n");
+  if(dirty){
+      printer->Print(variables_, "SetDirty($number$);\n");
+  }
 }
 
 void MapFieldGenerator::
@@ -310,9 +314,6 @@ GenerateSerializeWithCachedSizesToArray(io::Printer* printer) const {
 
 void MapFieldGenerator::GenerateSerializeWithCachedSizes(
     io::Printer* printer, const std::map<string, string>& variables) const {
-  printer->Print(variables,
-      "if (!this->$name$().empty()) {\n");
-  printer->Indent();
   const FieldDescriptor* key_field =
       descriptor_->message_type()->FindFieldByName("key");
   const FieldDescriptor* value_field =
@@ -390,44 +391,42 @@ void MapFieldGenerator::GenerateSerializeWithCachedSizes(
       "it", true);
   printer->Outdent();
   printer->Print("}\n");
-  printer->Outdent();
-  printer->Print("}\n");
 }
 
 void MapFieldGenerator::
 GenerateByteSize(io::Printer* printer) const {
-  printer->Print(variables_,
-      "total_size += $tag_size$ *\n"
-      "    ::google::protobuf::internal::FromIntSize(this->$name$_size());\n"
-      "{\n"
-      "  ::std::unique_ptr<$map_classname$> entry;\n"
-      "  for (::google::protobuf::Map< $key_cpp$, $val_cpp$ >::const_iterator\n"
-      "      it = this->$name$().begin();\n"
-      "      it != this->$name$().end(); ++it) {\n");
-
-  // If entry is allocated by arena, its desctructor should be avoided.
-  if (SupportsArenas(descriptor_)) {
     printer->Print(variables_,
-        "    if (entry.get() != NULL && entry->GetArena() != NULL) {\n"
-        "      entry.release();\n"
-        "    }\n");
-  }
+                   "total_size += $tag_size$ *\n"
+                   "    ::google::protobuf::internal::FromIntSize(this->$name$_size());\n"
+                   "{\n"
+                   "  ::std::unique_ptr<$map_classname$> entry;\n"
+                   "  for (::google::protobuf::Map< $key_cpp$, $val_cpp$ >::const_iterator\n"
+                   "      it = this->$name$().begin();\n"
+                   "      it != this->$name$().end(); ++it) {\n");
 
-  printer->Print(variables_,
-      "    entry.reset($name$_.New$wrapper$(it->first, it->second));\n"
-      "    total_size += ::google::protobuf::internal::WireFormatLite::\n"
-      "        $declared_type$SizeNoVirtual(*entry);\n"
-      "  }\n");
+    // If entry is allocated by arena, its desctructor should be avoided.
+    if (SupportsArenas(descriptor_)) {
+        printer->Print(variables_,
+                       "    if (entry.get() != NULL && entry->GetArena() != NULL) {\n"
+                       "      entry.release();\n"
+                       "    }\n");
+    }
 
-  // If entry is allocated by arena, its desctructor should be avoided.
-  if (SupportsArenas(descriptor_)) {
     printer->Print(variables_,
-        "  if (entry.get() != NULL && entry->GetArena() != NULL) {\n"
-        "    entry.release();\n"
-        "  }\n");
-  }
+                   "    entry.reset($name$_.New$wrapper$(it->first, it->second));\n"
+                   "    total_size += ::google::protobuf::internal::WireFormatLite::\n"
+                   "        $declared_type$SizeNoVirtual(*entry);\n"
+                   "  }\n");
 
-  printer->Print("}\n");
+    // If entry is allocated by arena, its desctructor should be avoided.
+    if (SupportsArenas(descriptor_)) {
+        printer->Print(variables_,
+                       "  if (entry.get() != NULL && entry->GetArena() != NULL) {\n"
+                       "    entry.release();\n"
+                       "  }\n");
+    }
+
+    printer->Print("}\n");
 }
 
 }  // namespace cpp

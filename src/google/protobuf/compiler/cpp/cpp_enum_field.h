@@ -53,7 +53,7 @@ class EnumFieldGenerator : public FieldGenerator {
   void GeneratePrivateMembers(io::Printer* printer) const;
   void GenerateAccessorDeclarations(io::Printer* printer) const;
   void GenerateInlineAccessorDefinitions(io::Printer* printer) const;
-  void GenerateClearingCode(io::Printer* printer) const;
+  void GenerateClearingCode(io::Printer* printer,bool dirty = false) const;
   void GenerateMergingCode(io::Printer* printer) const;
   void GenerateSwappingCode(io::Printer* printer) const;
   void GenerateConstructorCode(io::Printer* printer) const;
@@ -79,7 +79,7 @@ class EnumOneofFieldGenerator : public EnumFieldGenerator {
 
   // implements FieldGenerator ---------------------------------------
   void GenerateInlineAccessorDefinitions(io::Printer* printer) const;
-  void GenerateClearingCode(io::Printer* printer) const;
+  void GenerateClearingCode(io::Printer* printer,bool dirty) const;
   void GenerateSwappingCode(io::Printer* printer) const;
   void GenerateConstructorCode(io::Printer* printer) const;
 
@@ -97,7 +97,7 @@ class RepeatedEnumFieldGenerator : public FieldGenerator {
   void GeneratePrivateMembers(io::Printer* printer) const;
   void GenerateAccessorDeclarations(io::Printer* printer) const;
   void GenerateInlineAccessorDefinitions(io::Printer* printer) const;
-  void GenerateClearingCode(io::Printer* printer) const;
+  void GenerateClearingCode(io::Printer* printer,bool dirty) const;
   void GenerateMergingCode(io::Printer* printer) const;
   void GenerateSwappingCode(io::Printer* printer) const;
   void GenerateConstructorCode(io::Printer* printer) const;

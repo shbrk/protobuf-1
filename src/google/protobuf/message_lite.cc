@@ -227,6 +227,11 @@ uint8* MessageLite::SerializeWithCachedSizesToArray(uint8* target) const {
       io::CodedOutputStream::IsDefaultSerializationDeterministic(), target);
 }
 
+uint8* MessageLite::SerializeConditionWithCachedSizesToArray(uint8* target,int s_type) const {
+  return InternalSerializeConditionWithCachedSizesToArray(
+          io::CodedOutputStream::IsDefaultSerializationDeterministic(), target, s_type);
+}
+
 bool MessageLite::SerializeToCodedStream(io::CodedOutputStream* output) const {
   GOOGLE_DCHECK(IsInitialized()) << InitializationErrorMessage("serialize", *this);
   return SerializePartialToCodedStream(output);
@@ -282,6 +287,46 @@ bool MessageLite::AppendToString(string* output) const {
   return AppendPartialToString(output);
 }
 
+bool MessageLite::AppendDirtyToString(string* output) const {
+  GOOGLE_DCHECK(IsInitialized()) << InitializationErrorMessage("serialize", *this);
+  size_t old_size = output->size();
+  size_t byte_size = ByteSizeConditionLong(S_CPP_DIRTY);
+  if (byte_size > INT_MAX) {
+    GOOGLE_LOG(ERROR) << "Exceeded maximum protobuf size of 2GB: " << byte_size;
+    return false;
+  }
+
+  STLStringResizeUninitialized(output, old_size + byte_size);
+  uint8* start =
+          reinterpret_cast<uint8*>(io::mutable_string_data(output) + old_size);
+  uint8* end = SerializeConditionWithCachedSizesToArray(start,S_CPP_DIRTY);
+  if (end - start != byte_size) {
+    ByteSizeConsistencyError(byte_size, ByteSizeConditionLong(S_CPP_DIRTY), end - start, *this);
+  }
+  return true;
+}
+
+bool MessageLite::AppendFixedToString(string* output) const {
+    GOOGLE_DCHECK(IsInitialized()) << InitializationErrorMessage("serialize", *this);
+    size_t old_size = output->size();
+    size_t byte_size = ByteSizeConditionLong(S_CPP_FIXED);
+    if (byte_size > INT_MAX) {
+        GOOGLE_LOG(ERROR) << "Exceeded maximum protobuf size of 2GB: " << byte_size;
+        return false;
+    }
+
+    STLStringResizeUninitialized(output, old_size + byte_size);
+    uint8* start =
+            reinterpret_cast<uint8*>(io::mutable_string_data(output) + old_size);
+    uint8* end = SerializeConditionWithCachedSizesToArray(start,S_CPP_FIXED);
+    if (end - start != byte_size) {
+        ByteSizeConsistencyError(byte_size, ByteSizeConditionLong(S_CPP_FIXED), end - start, *this);
+    }
+    return true;
+}
+
+
+
 bool MessageLite::AppendPartialToString(string* output) const {
   size_t old_size = output->size();
   size_t byte_size = ByteSizeLong();
@@ -304,6 +349,19 @@ bool MessageLite::SerializeToString(string* output) const {
   output->clear();
   return AppendToString(output);
 }
+
+bool MessageLite::SerializeDirtyToString(string* output) {
+  output->clear();
+  bool result = AppendDirtyToString(output);
+  CleanDirty();
+  return result;
+}
+
+bool MessageLite::SerializeFixedToString(string* output) const {
+    output->clear();
+    return AppendFixedToString(output);
+}
+
 
 bool MessageLite::SerializePartialToString(string* output) const {
   output->clear();
@@ -353,6 +411,11 @@ void MessageLite::SerializeWithCachedSizes(
       output);
 }
 
+void MessageLite::SerializeConditionWithCachedSizes(
+        io::CodedOutputStream* output,int s_type) const {
+  SerializeWithCachedSizes(output);
+}
+
 // The table driven code optimizes the case that the CodedOutputStream buffer
 // is large enough to serialize into it directly.
 // If the proto is optimized for speed, this method will be overridden by
@@ -375,6 +438,11 @@ uint8* MessageLite::InternalSerializeWithCachedSizesToArray(
   } else {
     return internal::TableSerializeToArray(*this, table, deterministic, target);
   }
+}
+
+uint8* MessageLite::InternalSerializeConditionWithCachedSizesToArray(
+        bool deterministic, google::protobuf::uint8 *target, int s_type) const {
+  return InternalSerializeWithCachedSizesToArray(deterministic,target);
 }
 
 namespace internal {
