@@ -160,6 +160,7 @@ class MessageGenerator {
   void GenerateCopyFrom(io::Printer* printer);
   void GenerateSwap(io::Printer* printer);
   void GenerateIsInitialized(io::Printer* printer);
+  void GenerateIsFixed(io::Printer* printer);
 
   // Helpers for GenerateSerializeWithCachedSizes().
   //

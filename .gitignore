@@ -97,6 +97,9 @@ cmake/cmake-build-debug
 cmake/cmake-build-release
 build_msvc
 
+# vs
+.vs
+
 # NuGet packages: we want the repository configuration, but not the
 # packages themselves.
 /csharp/src/packages/*/

@@ -207,7 +207,7 @@ bool EmitFieldDefaultCondition(io::Printer *printer,
         return true;
     } else if (field->containing_oneof()) {
         printer->Print(
-                "if (has_$name$()) {\n",
+                "if (!has_$name$()) {\n",
                 "name", FieldName(field));
         printer->Indent();
         return true;
@@ -1946,6 +1946,9 @@ GenerateClassMethods(io::Printer *printer) {
 
         GenerateIsInitialized(printer);
         printer->Print("\n");
+
+        GenerateIsFixed(printer);
+        printer->Print("\n");
     }
 
     GenerateSwap(printer);
@@ -3427,6 +3430,7 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
             "full_name", descriptor_->full_name());
 
     printer->Indent();
+    printer->Print("std::set<int> hasClear;\n");
     printer->Print("for (;;) {\n");
     printer->Indent();
 
@@ -3512,11 +3516,18 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
                     "number", SimpleItoa(field->number()));
             printer->Indent();
             const FieldGenerator &field_generator = field_generators_.get(field);
+            printer->Print(
+                    "if(!hasClear.count($number$)){\n"
+                    "  this->clear_$name$();\n"
+                    "  hasClear.insert($number$);\n"
+                    "}\n"
+                    "\n",
+                    "number",SimpleItoa(field->number()),
+                    "name", field->name());
 
             printer->Print(
                     "if (static_cast< ::google::protobuf::uint8>(tag) ==\n"
                     "    static_cast< ::google::protobuf::uint8>($truncated$u /* $full$ & 0xFF */)) {\n"
-                    "  this->clear_$name$();\n"
                     "  break;\n"
                     "}\n",
                     "truncated", SimpleItoa(WireFormat::MakeDefaultTag(field) & 0xFF),
@@ -3674,6 +3685,7 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
             "  }\n"                   // for (;;)
             "success:\n"
             "  // @@protoc_insertion_point(parse_success:$full_name$)\n"
+            "  CleanDirty();\n"
             "  return true;\n"
             "failure:\n"
             "  // @@protoc_insertion_point(parse_failure:$full_name$)\n"
@@ -4389,33 +4401,31 @@ GenerateByteSize(io::Printer *printer) {
     // Fields inside a oneof don't use _has_bits_ so we count them in a separate
     // pass.
     for (int i = 0; i < descriptor_->oneof_decl_count(); i++) {
-        printer->Print(
-                "switch ($oneofname$_case()) {\n",
-                "oneofname", descriptor_->oneof_decl(i)->name());
-        printer->Indent();
         for (int j = 0; j < descriptor_->oneof_decl(i)->field_count(); j++) {
             const FieldDescriptor *field = descriptor_->oneof_decl(i)->field(j);
             PrintFieldComment(printer, field);
-            printer->Print(
-                    "case k$field_name$: {\n",
-                    "field_name", UnderscoresToCamelCase(field->name(), true));
-            printer->Indent();
+
+            bool have_enclosing_if = EmitFieldCondition(printer, "this->", field);
+            bool have_enclosing_else = false;
+            if(EmitFieldDefaultCondition(printer,"this->",field)){
+                size_t  tag_size = WireFormat::TagSize(field->number(), field->type());
+                printer->Print("total_size += $tag_size$;\n","tag_size",SimpleItoa(tag_size));
+                printer->Outdent();
+                printer->Print("} else {\n");
+                printer->Indent();
+                have_enclosing_else = true;
+            }
             field_generators_.get(field).GenerateByteSize(printer);
-            printer->Print(
-                    "break;\n");
-            printer->Outdent();
-            printer->Print(
-                    "}\n");
+            if (have_enclosing_if) {
+                printer->Outdent();
+                printer->Print("}\n");
+            }
+            if(have_enclosing_else) {
+                printer->Outdent();
+                printer->Print("}\n");
+            }
+            printer->Print("\n");
         }
-        printer->Print(
-                "case $cap_oneof_name$_NOT_SET: {\n"
-                "  break;\n"
-                "}\n",
-                "cap_oneof_name",
-                ToUpper(descriptor_->oneof_decl(i)->name()));
-        printer->Outdent();
-        printer->Print(
-                "}\n");
     }
 
     if (num_weak_fields_) {
@@ -4440,6 +4450,15 @@ GenerateByteSize(io::Printer *printer) {
     printer->Print("}\n");
 }
 
+void MessageGenerator::
+GenerateIsFixed(io::Printer *printer) {
+    printer->Print(
+            "bool $classname$::IsFixed(uint32_t field) const {\n"
+            "  return _internal_fixed.count(field);\n"
+            "}\n",
+            "classname", classname_);
+    printer->Indent();
+}
 
 void MessageGenerator::
 GenerateIsInitialized(io::Printer *printer) {

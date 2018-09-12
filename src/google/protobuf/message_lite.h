@@ -355,7 +355,7 @@ class LIBPROTOBUF_EXPORT MessageLite {
   inline bool IsDirty(uint32_t field) const {
       return _internal_dirty.count(field) != 0;
   };
-  inline bool IsFixed(uint32_t field) const {
+  virtual bool IsFixed(uint32_t field) const {
       return true;
   }
   inline bool CheckFieldCondition(uint32_t field,int s_type) const {
