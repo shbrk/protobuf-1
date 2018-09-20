@@ -53,6 +53,45 @@
 namespace google {
 namespace protobuf {
 
+class FlagSetter final {
+public:
+    FlagSetter() = default;
+    ~FlagSetter() = default;
+
+    FlagSetter(std::initializer_list<uint32_t> lst) {
+      for (auto val : lst) {
+        SetFlag(val);
+      }
+    };
+
+    void SetFlag(uint32_t i) {
+      if (i < 64) {
+        flag = flag | ((uint64_t) 1 << i);
+      } else {
+        flagSet.insert(i);
+      }
+    };
+
+    bool GetFlag(uint32_t i) const {
+      if (i < 64) {
+        return (flag & ((uint64_t) 1 << i)) > 0;
+      } else {
+        return flagSet.count(i) > 0;
+      }
+    }
+
+    bool Clear() {
+      flag = 0;
+      flagSet.clear();
+    }
+
+private:
+    int64_t flag = 0;
+    std::set<uint32_t> flagSet;
+};
+
+
+
 template <typename T>
 class RepeatedPtrField;
 namespace io {
@@ -350,10 +389,10 @@ class LIBPROTOBUF_EXPORT MessageLite {
   // proto.
   virtual size_t ByteSizeLong() const = 0;
   virtual size_t ByteSizeConditionLong(int s_type) const { return 0;};
-  inline void CleanDirty() { _internal_dirty.clear();};
-  inline void SetDirty(uint32_t field) { _internal_dirty.insert(field);} ;
+  inline void CleanDirty() { _internal_dirty.Clear();};
+  inline void SetDirty(uint32_t field) { _internal_dirty.SetFlag(field);} ;
   inline bool IsDirty(uint32_t field) const {
-      return _internal_dirty.count(field) != 0;
+      return _internal_dirty.GetFlag(field);
   };
   virtual bool IsFixed(uint32_t field) const {
       return true;
@@ -433,7 +472,7 @@ class LIBPROTOBUF_EXPORT MessageLite {
   static T* CreateMaybeMessage(Arena* arena) {
     return Arena::CreateMaybeMessage<T>(arena);
   }
-  std::set<uint32_t> _internal_dirty;
+  FlagSetter _internal_dirty;
  private:
   // TODO(gerbens) make this a pure abstract function
   virtual const void* InternalGetTable() const { return NULL; }

@@ -963,7 +963,7 @@ GenerateClassDefinition(io::Printer *printer) {
                    "static const $classname$& default_instance();\n"
                    "\n");
     printer->Print(vars,
-                   "static const std::set<uint> _internal_fixed;\n");
+                   "static const ::google::protobuf::FlagSetter _internal_fixed;\n");
 
     // Generate enum values for every field in oneofs. One list is generated for
     // each oneof with an additional *_NOT_SET value.
@@ -1908,7 +1908,7 @@ GenerateClassMethods(io::Printer *printer) {
     }
 
     printer->Print(
-            "const std::set<uint> $classname$::_internal_fixed = { $fixed$ };\n",
+            "const ::google::protobuf::FlagSetter $classname$::_internal_fixed = { $fixed$ };\n",
             "classname", classname_,
             "fixed",fixedStr);
 
@@ -3430,7 +3430,7 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
             "full_name", descriptor_->full_name());
 
     printer->Indent();
-    printer->Print("std::set<int> hasClear;\n");
+    printer->Print("::google::protobuf::FlagSetter hasClear;\n");
     printer->Print("for (;;) {\n");
     printer->Indent();
 
@@ -3517,9 +3517,9 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
             printer->Indent();
             const FieldGenerator &field_generator = field_generators_.get(field);
             printer->Print(
-                    "if(!hasClear.count($number$)){\n"
+                    "if(!hasClear.GetFlag($number$)){\n"
                     "  this->clear_$name$();\n"
-                    "  hasClear.insert($number$);\n"
+                    "  hasClear.SetFlag($number$);\n"
                     "}\n"
                     "\n",
                     "number",SimpleItoa(field->number()),
@@ -4454,7 +4454,7 @@ void MessageGenerator::
 GenerateIsFixed(io::Printer *printer) {
     printer->Print(
             "bool $classname$::IsFixed(uint32_t field) const {\n"
-            "  return _internal_fixed.count(field);\n"
+            "  return _internal_fixed.GetFlag(field);\n"
             "}\n",
             "classname", classname_);
     printer->Indent();
