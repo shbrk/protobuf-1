@@ -3523,7 +3523,7 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
                     "}\n"
                     "\n",
                     "number",SimpleItoa(field->number()),
-                    "name", field->name());
+                    "name", FieldName(field));
 
             printer->Print(
                     "if (static_cast< ::google::protobuf::uint8>(tag) ==\n"
@@ -3531,8 +3531,7 @@ GenerateMergeFromCodedStream(io::Printer *printer) {
                     "  break;\n"
                     "}\n",
                     "truncated", SimpleItoa(WireFormat::MakeDefaultTag(field) & 0xFF),
-                    "full", SimpleItoa(WireFormat::MakeDefaultTag(field)),
-                    "name", field->name());
+                    "full", SimpleItoa(WireFormat::MakeDefaultTag(field)));
 
 
             // Emit code to parse the common, expected case.

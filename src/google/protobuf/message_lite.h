@@ -80,7 +80,7 @@ public:
       }
     }
 
-    bool Clear() {
+    void Clear() {
       flag = 0;
       flagSet.clear();
     }
