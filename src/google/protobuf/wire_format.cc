@@ -393,7 +393,7 @@ bool WireFormat::ParseAndMergePartial(io::CodedInputStream* input,
                                       Message* message) {
   const Descriptor* descriptor = message->GetDescriptor();
   const Reflection* message_reflection = message->GetReflection();
-
+  FlagSetter setter;
   while(true) {
     uint32 tag = input->ReadTag();
     if (tag == 0) {
@@ -433,6 +433,11 @@ bool WireFormat::ParseAndMergePartial(io::CodedInputStream* input,
         }
         continue;  // Skip ParseAndMergeField(); already taken care of.
       }
+
+	  if (!setter.GetFlag((uint32_t)field_number)) {
+		  message_reflection->ClearField(message, field);
+		  setter.SetFlag((uint32_t)field_number);
+	  }
     }
 
     if (!ParseAndMergeField(tag, field, message, input)) {
