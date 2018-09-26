@@ -488,6 +488,9 @@ bool WireFormat::ParseAndMergeField(
   if (field == NULL) {
     value_format = UNKNOWN;
   } else if (WireFormatLite::GetTagWireType(tag) ==
+	  WireFormatLite::WIRETYPE_DEFAULT) {
+	  return true;
+  } else if (WireFormatLite::GetTagWireType(tag) ==
              WireTypeForFieldType(field->type())) {
     value_format = NORMAL_FORMAT;
   } else if (field->is_packable() &&
