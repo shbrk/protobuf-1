@@ -121,6 +121,36 @@ class LIBPROTOBUF_EXPORT ArrayOutputStream : public ZeroCopyOutputStream {
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(ArrayOutputStream);
 };
 
+
+// ===================================================================
+
+// A ZeroCopyInputStream backed by an in-memory array of bytes.
+class LIBPROTOBUF_EXPORT StringInputStream : public ZeroCopyInputStream {
+public:
+	// Create an InputStream that returns the bytes pointed to by "data".
+	// "data" remains the property of the caller but must remain valid until
+	// the stream is destroyed.  If a block_size is given, calls to Next()
+	// will return data blocks no larger than the given size.  Otherwise, the
+	// first call to Next() returns the entire array.  block_size is mainly
+	// useful for testing; in production you would probably never want to set
+	// it.
+	StringInputStream(const std::string& data);
+
+	// implements ZeroCopyInputStream ----------------------------------
+	bool Next(const void** data, int* size);
+	void BackUp(int count);
+	bool Skip(int count);
+	int64 ByteCount() const;
+
+
+private:
+	std::string data_;
+	ArrayInputStream ai_;
+
+	GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(StringInputStream);
+};
+
+
 // ===================================================================
 
 // A ZeroCopyOutputStream which appends bytes to a string.

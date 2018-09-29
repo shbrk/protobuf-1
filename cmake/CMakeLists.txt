@@ -206,7 +206,7 @@ endif (protobuf_BUILD_TESTS)
 include(install.cmake)
 
 if (protobuf_BUILD_EXAMPLES)
-  include(examples.cmake)
+  #include(examples.cmake)
 endif (protobuf_BUILD_EXAMPLES)
 
 if(protobuf_VERBOSE)

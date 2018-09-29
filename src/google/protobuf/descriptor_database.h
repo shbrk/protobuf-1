@@ -72,6 +72,11 @@ class LIBPROTOBUF_EXPORT DescriptorDatabase {
   virtual bool FindFileByName(const string& filename,
                               FileDescriptorProto* output) = 0;
 
+  virtual bool FindFileByName(const string& filename, const string& content,
+	  FileDescriptorProto* output) {
+	  return false;
+  };
+
   // Find the file that declares the given fully-qualified symbol name.
   // If found, fills in *output and returns true, otherwise returns false
   // and leaves *output undefined.

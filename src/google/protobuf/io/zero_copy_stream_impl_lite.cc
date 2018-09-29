@@ -104,6 +104,31 @@ int64 ArrayInputStream::ByteCount() const {
 }
 
 
+
+// ===================================================================
+
+StringInputStream::StringInputStream(const std::string& data)
+	: data_(data),
+	ai_(data_.data(), data_.size()) {
+
+}
+
+bool StringInputStream::Next(const void** data, int* size) {
+	return ai_.Next(data, size);
+}
+
+void StringInputStream::BackUp(int count) {
+	ai_.BackUp(count);
+}
+
+bool StringInputStream::Skip(int count) {
+	return ai_.Skip(count);
+}
+
+int64 StringInputStream::ByteCount() const {
+	return ai_.ByteCount();
+}
+
 // ===================================================================
 
 ArrayOutputStream::ArrayOutputStream(void* data, int size, int block_size)

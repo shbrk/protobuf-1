@@ -1538,6 +1538,7 @@ class LIBPROTOBUF_EXPORT DescriptorPool {
   // Find a FileDescriptor in the pool by file name.  Returns NULL if not
   // found.
   const FileDescriptor* FindFileByName(const string& name) const;
+  const FileDescriptor* FindFileByName(const string& name,const string& content) const;
 
   // Find the FileDescriptor in the pool which defines the given symbol.
   // If any of the Find*ByName() methods below would succeed, then this is
@@ -1759,6 +1760,7 @@ class LIBPROTOBUF_EXPORT DescriptorPool {
   // the caller should search for the thing again.  These are declared
   // const because they are called by (semantically) const methods.
   bool TryFindFileInFallbackDatabase(const string& name) const;
+  bool TryFindFileInFallbackDatabase(const string& name, const string& content) const;
   bool TryFindSymbolInFallbackDatabase(const string& name) const;
   bool TryFindExtensionInFallbackDatabase(const Descriptor* containing_type,
                                           int field_number) const;

@@ -97,6 +97,7 @@ class LIBPROTOBUF_EXPORT SourceTreeDescriptorDatabase : public DescriptorDatabas
 
   // implements DescriptorDatabase -----------------------------------
   bool FindFileByName(const string& filename, FileDescriptorProto* output);
+  bool FindFileByName(const string& filename, const string& content,FileDescriptorProto* output);
   bool FindFileContainingSymbol(const string& symbol_name,
                                 FileDescriptorProto* output);
   bool FindFileContainingExtension(const string& containing_type,
@@ -165,6 +166,7 @@ class LIBPROTOBUF_EXPORT Importer {
   // separate Importer object to import each one (but use the same
   // DescriptorPool so that they can be cross-linked).
   const FileDescriptor* Import(const string& filename);
+  const FileDescriptor* Import(const string& filename, const string& content);
 
   // The DescriptorPool in which all imported FileDescriptors and their
   // contents are stored.

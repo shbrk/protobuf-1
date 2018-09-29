@@ -1427,6 +1427,27 @@ const FileDescriptor* DescriptorPool::FindFileByName(const string& name) const {
   return NULL;
 }
 
+const FileDescriptor* DescriptorPool::FindFileByName(const string& name,const string& content) const {
+	MutexLockMaybe lock(mutex_);
+	if (fallback_database_ != NULL) {
+		tables_->known_bad_symbols_.clear();
+		tables_->known_bad_files_.clear();
+	}
+	const FileDescriptor* result = tables_->FindFile(name);
+	if (result != NULL) return result;
+	if (underlay_ != NULL) {
+		result = underlay_->FindFileByName(name);
+		if (result != NULL) return result;
+	}
+	if (TryFindFileInFallbackDatabase(name,content)) {
+		result = tables_->FindFile(name);
+		if (result != NULL) return result;
+	}
+	return NULL;
+}
+
+
+
 const FileDescriptor* DescriptorPool::FindFileContainingSymbol(
     const string& symbol_name) const {
   MutexLockMaybe lock(mutex_);
@@ -1860,6 +1881,21 @@ bool DescriptorPool::TryFindFileInFallbackDatabase(const string& name) const {
   }
   return true;
 }
+
+bool DescriptorPool::TryFindFileInFallbackDatabase(const string& name, const string& content) const {
+	if (fallback_database_ == NULL) return false;
+
+	if (tables_->known_bad_files_.count(name) > 0) return false;
+
+	FileDescriptorProto file_proto;
+	if (!fallback_database_->FindFileByName(name,content,&file_proto) ||
+		BuildFileFromDatabase(file_proto) == NULL) {
+		tables_->known_bad_files_.insert(name);
+		return false;
+	}
+	return true;
+}
+
 
 bool DescriptorPool::IsSubSymbolOfBuiltType(const string& name) const {
   string prefix = name;

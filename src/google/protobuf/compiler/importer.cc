@@ -167,6 +167,39 @@ bool SourceTreeDescriptorDatabase::FindFileContainingExtension(
   return false;
 }
 
+
+bool SourceTreeDescriptorDatabase::FindFileByName(
+	const string& filename, const string& content,FileDescriptorProto* output) {
+	io::StringInputStream* ai = new io::StringInputStream(content);
+	std::unique_ptr<io::ZeroCopyInputStream> input(ai);
+	if (input == NULL) {
+		if (error_collector_ != NULL) {
+			error_collector_->AddError(filename, -1, 0,
+				source_tree_->GetLastErrorMessage());
+		}
+		return false;
+	}
+
+	// Set up the tokenizer and parser.
+	SingleFileErrorCollector file_error_collector(filename, error_collector_);
+	io::Tokenizer tokenizer(input.get(), &file_error_collector);
+
+	Parser parser;
+	if (error_collector_ != NULL) {
+		parser.RecordErrorsTo(&file_error_collector);
+	}
+	if (using_validation_error_collector_) {
+		parser.RecordSourceLocationsTo(&source_locations_);
+	}
+
+	// Parse it.
+	output->set_name(filename);
+	return parser.Parse(&tokenizer, output) &&
+		!file_error_collector.had_errors();
+}
+
+
+
 // -------------------------------------------------------------------
 
 SourceTreeDescriptorDatabase::ValidationErrorCollector::
@@ -216,6 +249,10 @@ Importer::~Importer() {}
 
 const FileDescriptor* Importer::Import(const string& filename) {
   return pool_.FindFileByName(filename);
+}
+
+const FileDescriptor* Importer::Import(const string& filename,const string& content) {
+	return pool_.FindFileByName(filename,content);
 }
 
 void Importer::AddUnusedImportTrackFile(const string& file_name) {

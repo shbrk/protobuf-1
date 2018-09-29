@@ -99,6 +99,7 @@ build_msvc
 
 # vs
 .vs
+builddir
 
 # NuGet packages: we want the repository configuration, but not the
 # packages themselves.
