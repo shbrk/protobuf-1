@@ -434,7 +434,7 @@ bool WireFormat::ParseAndMergePartial(io::CodedInputStream* input,
         continue;  // Skip ParseAndMergeField(); already taken care of.
       }
 
-	  if (!setter.GetFlag((uint32_t)field_number)) {
+	  if (field != NULL && setter.GetFlag((uint32_t)field_number)) {
 		  message_reflection->ClearField(message, field);
 		  setter.SetFlag((uint32_t)field_number);
 	  }
